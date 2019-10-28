@@ -576,9 +576,7 @@ public class Generador {
     public class ARSTS {
     Nodos x;
     Nodos y;                                                                            
-    String datos;  
-    public ARSTS(){/*constructor vacio*/}                                                              
-                                                                                
+    String datos;                                                                                                                       
     public ARSTS(Nodos x, Nodos y, String datos){
         this.x = x;                                                                           
         this.y = y;                                                                           
