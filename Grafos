@@ -1,11 +1,604 @@
-package Grafos;
-/** @author ALEJANDRA **/
+package p2;
 
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
-import java.util.*;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Random;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
+
+/**
+ *
+ * @author Alejandra
+ */
+public class Generador {
+    
+    public static void main(String[] args) throws IOException{
+        
+        int modelo;
+        modelo = Integer.parseInt(JOptionPane.showInputDialog("Generador de grafos:\n "
+                + "\t(1) Modelo de Erdös y Rényi \n "
+                + "\t(2) Modelo de Gilbert \n "
+                + "\t(3) Modelo Geográfico Simple \n "
+                + "\t(4) Variante del Modelo de Barabási-Albert "));
+        
+        int verif1=0, verif2=0, verif3=0 ,  numnodos=0, goesto=0 , hayauto=0, Nrealizar=1; 
+       
+        int contadoraristas = 0;
+        int comp=0;
+        String dato_arista = "No se tienen registros.";
+        String metodo = " ",ciclos =" ", dirigidos= " ";
+
+        /*--------------------------*/
+        int contarbol=1;
+         
+        while (verif2 == 0){
+            String dirigido=JOptionPane.showInputDialog("¿Se trata de un grafo dirigido? s/n");
+            if ("s".equals(dirigido) || "S".equals(dirigido)){
+                goesto =1; verif2=1;}
+            else if ("n".equals(dirigido)|| "N".equals(dirigido)){
+                goesto =0; verif2=1;}
+            else{
+                verif2=0;}
+            if (dirigido == null){System.exit(0);}}
+        
+        while (verif3 == 0){
+            String autociclo=JOptionPane.showInputDialog("¿Se tienen autociclos? s/n");
+            if ("s".equals(autociclo) || "S".equals(autociclo)){
+                hayauto =1; verif3=1;}
+            else if ("n".equals(autociclo)|| "N".equals(autociclo)){
+                hayauto =0; verif3=1;}
+            else{
+                verif3=0;}
+            if (autociclo == null){System.exit(0);}}
+        
+        String Nnodos=JOptionPane.showInputDialog("Indique el número de nodos: ");
+        numnodos = Integer.parseInt(Nnodos);
+        if (Nnodos == null){System.exit(0);}
+        JFileChooser archi = new JFileChooser();
+        archi.showSaveDialog(null);
+        String archivo = archi.getCurrentDirectory().toString() + "\\" + archi.getSelectedFile().getName();
+        HashMap<Integer, Nodos> LNodos = new HashMap<>();
+        HashMap<Integer, Nodos> ANodos = new HashMap<>();
+        HashMap<Integer, Nodos> BNodos = new HashMap<>();
+        HashMap<Integer, ARSTS> CNodos = new HashMap<>();
+        HashMap<Integer, ARSTS> LAristas = new HashMap<>();
+        /*------------------------------------------------------------------------------------------------*/
+        switch ( modelo ) {
+            case 1:
+                System.out.println( "(1) Modelo de Erdös." );
+                int numparoz = 0;
+                contadoraristas = 0;
+                String Npareseroz=JOptionPane.showInputDialog("En este modelo, se eligen a al azar"
+                        + " m distintos pares de distintos vértices.\n"
+                        + "Indique el valor de m: ");
+                numparoz = Integer.parseInt(Npareseroz);
+                comp=0;
+                int counter = 0, x, y,i=0,identifier=0;
+                String Nombre,Datos;
+                for (i = 0; i < numnodos; i++){
+                    identifier= i;
+                    Nombre = "Nodo" + i;
+                    Datos = "Dato" + i;
+                    Nodos nodo = new Nodos(identifier,Nombre,Datos);
+                    LNodos.put(identifier, nodo);}
+                try (FileWriter fw = new FileWriter(archivo + ".gv");
+                BufferedWriter bw = new BufferedWriter(fw);
+                PrintWriter out = new PrintWriter(bw)) {
+                out.println("strict digraph{");
+                out.flush();
+                Random r = new Random();
+                while(contadoraristas < numparoz){
+                    x = r.nextInt(numnodos);
+                    y = r.nextInt(numnodos);
+                    if (hayauto == 0) {
+                        while (x == y){
+                            y = r.nextInt(numnodos);
+                        }
+                    }
+                    dato_arista = "Nodo x" + x + "Nodo y" + y;
+                    Nodos a = LNodos.get(x);
+                    Nodos b = LNodos.get(y);
+                    if (comp == 0){
+                        ARSTS arista = new ARSTS(a,b,dato_arista);
+                        LAristas.put(contadoraristas,arista);
+                        if (goesto == 0){
+                            out.println("\"" + a.introidentifier() + "\"--\"" + b.introidentifier() +  "\"");
+                            out.flush();}
+                        else{
+                            out.println("\"" + a.introidentifier() + "\"->\"" + b.introidentifier() +  "\"");
+                            out.flush();}
+                            comp = 1;  
+                            a.introadj(b);
+                            b.introadj(a);
+                    }
+                    
+                    else{
+                        for (i=0;i < LAristas.size();i++){
+                            ARSTS comparaarista = LAristas.get(i);
+                            HashMap<Integer, Nodos> verificaaristas = comparaarista.outnodos();    
+                            Nodos va=verificaaristas.get(1);
+                            Nodos vb=verificaaristas.get(2);
+  
+                            Nrealizar=1;
+                            if ((a == va && b == vb) || (a == vb && b == va && goesto == 0)){ 
+                                Nrealizar=0;
+                                break;}
+            
+                        }
+                        System.out.println("-> "+Nrealizar);
+                        if(Nrealizar ==1){
+                            ARSTS arista = new ARSTS(a,b,dato_arista);
+                            LAristas.put(contadoraristas,arista);  
+                            a.introadj(b);
+                            b.introadj(a);
+                            if (goesto == 0){
+                                out.println("\"" + a.introidentifier() + "\"--\"" + b.introidentifier() +  "\"");
+                                out.flush();} 
+                            else{
+                                out.println("\"" + a.introidentifier() + "\"->\"" + b.introidentifier() +  "\"");
+                                out.flush();}
+                                contadoraristas++;}
+                    }
+                }
+                out.println("}");
+                out.close(); 
+                }
+                System.out.println( "Fin Erdos" );
+                break;
+                
+
+        /*------------------------------------------------------------------------------------------------*/
+ 
+            case 2:
+                System.out.println("(2) Modelo de Gilbert.");
+                float numeroprobabilidad = 2;
+                contadoraristas = 0;
+                while (numeroprobabilidad < 0 || numeroprobabilidad > 1 ){
+                    String probabilidad=JOptionPane.showInputDialog("Probabilidad de conexión (Min=0 , Max=1)");
+                    numeroprobabilidad = Float.parseFloat(probabilidad);
+                }
+                Random r = new Random();
+                int cont=0,j,k;
+                comp=0;
+                float comparaproba;
+                for (i = 0; i < numnodos; i++){
+                    identifier= i;
+                    Nombre = "Nodo" + i;
+                    Datos = "Dato" + i;
+                    Nodos nodo = new Nodos(identifier,Nombre,Datos);
+                    LNodos.put(identifier, nodo);
+                }
+                try (FileWriter fw = new FileWriter(archivo + ".gv");
+                        BufferedWriter bw = new BufferedWriter(fw);
+                        PrintWriter out = new PrintWriter(bw)){
+                    out.println("strict digraph{");
+                    out.flush();
+                    for(i = 0; i < numnodos; i++){
+                        for(j = 0; j < numnodos; j++){
+                            cont++; 
+                            System.out.println( cont);
+                            if (hayauto == 0 && (i == j)){ continue;}
+                            comparaproba = r.nextFloat();
+                            dato_arista = "Nodo x" + i + "Nodo y" + j; 
+                            if (comparaproba < numeroprobabilidad) {
+                                Nodos a = LNodos.get(i);
+                                Nodos b = LNodos.get(j);
+                                if (comp == 0){
+                                    ARSTS arista = new ARSTS(a,b,dato_arista);
+                                    LAristas.put(contadoraristas,arista);  
+                                    a.introadj(b);
+                                    b.introadj(a);
+                                    if (goesto == 0) {
+                                        out.println("\"" + a.introidentifier() + "\"--\"" + b.introidentifier() +  "\"");
+                                        out.flush();  
+                                    } 
+                                    else {
+                                        out.println("\"" + a.introidentifier() + "\"->\"" + b.introidentifier() +  "\"");
+                                        out.flush();}
+                                        comp=1;
+                                }else{
+                                    for (k=0; k < LAristas.size() ;k++){
+                                        ARSTS comparaarista = LAristas.get(k);
+                                        HashMap<Integer, Nodos> verificaaristas = comparaarista.outnodos();    
+                                        Nodos va=verificaaristas.get(1);
+                                        Nodos vb=verificaaristas.get(2);
+                                        Nrealizar=1;
+                                        if ((a == va && b == vb) || (a == vb && b == va && goesto == 0)){
+                                            Nrealizar=0;
+                                            break;
+                                        }
+                                    }
+                                }
+                                if(Nrealizar==1){
+                                    ARSTS arista = new ARSTS(a,b,dato_arista);
+                                    LAristas.put(contadoraristas,arista);
+                                    a.introadj(b);
+                                    b.introadj(a);
+                                    if (goesto == 0) {
+                                        out.println("\"" + a.introidentifier() + "\"--\"" + b.introidentifier() +  "\"");
+                                        out.flush();
+                                    } 
+                                    else{
+                                        out.println("\"" + a.introidentifier() + "\"->\"" + b.introidentifier() +  "\"");
+                                        out.flush();}
+                                        contadoraristas++;}
+                            }
+                        }
+                    }
+                    out.println("}");
+                    out.close(); 
+                }
+                System.out.println("Fin Gilbert");
+                break;  
+              
+        /*------------------------------------------------------------------------------------------------*/
+          
+        case 3:
+        System.out.println("(3) Modelo Geográfico Simple." );
+       
+        double dismin=0;
+        double distancia=0;
+         int q;
+        while (dismin >= 0 && dismin <= 1){     
+        String dis=JOptionPane.showInputDialog("Indique la distancia minima para conectar los nodos"
+                + "t.q  0<d<1)");
+        /*dismin = Integer.parseInt(dis);*/
+        dismin = Float.parseFloat(dis);
+        }
+        for (i = 0; i < numnodos; i++) { 
+        identifier= i;
+        Nombre = "Nodo" + i;
+        Datos = "Dato" + i;
+        Nodos nodo = new Nodos(identifier,Nombre,Datos);
+        LNodos.put(identifier, nodo);}    
+        List l1 = new ArrayList();
+        List l2 = new ArrayList();
+        for (int w = 0; w < numnodos; w++) {
+        l1.add(w);
+        l2.add(w);
+        }
+        Collections.shuffle(l1);
+        Collections.shuffle(l2);
+        try (FileWriter fw = new FileWriter(archivo + ".gv");
+        BufferedWriter bw = new BufferedWriter(fw);
+        PrintWriter out = new PrintWriter(bw)) {
+        out.println("strict digraph{");
+        out.flush();
+        for(i = 0; i < numnodos; i++) { 
+        int v1=(int)l1.get(i);
+        for(j = 0; j < numnodos; j++){
+        int v2=(int)l2.get(j);
+        if (hayauto == 0 && v1 == v2) { continue;}
+        Nodos a = LNodos.get(v1);
+        Nodos b = LNodos.get(v2);
+        r = new Random();
+        distancia = Math.sqrt(Math.pow( r.nextFloat() - r.nextFloat(),2) + Math.pow(r.nextFloat() - r.nextFloat(),2));
+        if (distancia <= dismin ) {
+        dato_arista = "Nodo x" + v1 + "Nodo y" + v2;
+        if (comp == 0){
+        ARSTS arista = new ARSTS(a,b,dato_arista);
+        LAristas.put(contadoraristas,arista);  
+        a.introadj(b);
+        b.introadj(a);
+        if (goesto == 0) {
+        out.println("\"" + a.introidentifier() + "\"--\"" + b.introidentifier() +  "\"");
+        out.flush();  } 
+        else { 
+        out.println("\"" + a.introidentifier() + "\"->\"" + b.introidentifier() +  "\"");
+        out.flush();}
+        comp = 1;   } 
+        else {
+       
+        for (q=0;q < LAristas.size();q++){
+        ARSTS comparaarista = LAristas.get(q);
+        HashMap<Integer, Nodos> verificaaristas = comparaarista.outnodos();    
+        Nodos va=verificaaristas.get(1);
+        Nodos vb=verificaaristas.get(2);
+        Nrealizar=1;
+        if ((a == va && b == vb) || (a == vb && b == va && goesto == 0)) { 
+        Nrealizar=0;
+        break;}
+        
+        
+        }      
+        if(Nrealizar==1){
+        ARSTS arista = new ARSTS(a,b,dato_arista);
+        LAristas.put(contadoraristas,arista);
+        a.introadj(b);
+        b.introadj(a);
+        if (goesto == 0) {
+        out.println("\"" + a.introidentifier() + "\"--\"" + b.introidentifier() +  "\"");
+        out.flush();} 
+        else { 
+        out.println("\"" + a.introidentifier() + "\"->\"" + b.introidentifier() +  "\"");
+        out.flush();}
+        contadoraristas++;}}}}}
+        out.println("}");
+        out.close();}    
+            System.out.println("Fin Geográfico.");
+        break;
+    
+        /*------------------------------------------------------------------------------------------------*/
+
+        case 4:
+        System.out.println("(4) Variante del Modelo de Barabási-Albert");
+        int dat;
+        String eldato;
+        double proba;
+        int pnodos=-1,contj,t,co,divisor;
+        float comparador;
+        while (pnodos < 0 ){     
+        String primnodos=JOptionPane.showInputDialog("Primeros n Nodos");
+        pnodos = Integer.parseInt(primnodos);
+        }   
+        try (FileWriter fw = new FileWriter(archivo + ".gv");
+        BufferedWriter bw = new BufferedWriter(fw);
+        PrintWriter out = new PrintWriter(bw)) {
+        out.println("strict digraph{");
+        out.flush();
+        r = new Random();
+        identifier= 0;
+        Nombre = "Nodo" + 0;
+        Datos = ""+ (pnodos + -1);
+        contj=0;
+        Nodos nodo = new Nodos(identifier,Nombre,Datos); 
+        LNodos.put(identifier, nodo);
+        for (t = 1; t < pnodos; t++) { 
+        identifier= t;
+        Nombre = "Nodo" + t;
+        co = pnodos -1;
+        Datos = ""+ co ;
+        nodo = new Nodos(identifier,Nombre,Datos); 
+        LNodos.put(identifier, nodo);
+    
+        }
+        
+        for(i = 0; i < pnodos; i++){
+            for(j = 0; j < pnodos; j++){
+                if (hayauto == 0 && (i == j)){continue;}
+        dato_arista = "Nodo x" + i + "Nodo y" + j;
+        Nodos a = LNodos.get(i);
+        Nodos b = LNodos.get(j);
+        ARSTS arista = new ARSTS(a,b,dato_arista);
+        LAristas.put(contadoraristas,arista); 
+        a.introadj(b);
+        b.introadj(a);
+        if (goesto == 0) {
+        out.println("\"" + a.introidentifier() + "\"--\"" + b.introidentifier() +  "\"");
+        out.flush();  } 
+        else { 
+        out.println("\"" + a.introidentifier() + "\"->\"" + b.introidentifier() +  "\"");
+        out.flush();}
+        }}
+        divisor = pnodos  ;
+        for(i = pnodos; i < numnodos; i++) { 
+        identifier= i;
+        Nombre = "Nodo" + i;
+        Datos = "" + 0;
+        nodo = new Nodos(identifier,Nombre,Datos); 
+        LNodos.put(identifier, nodo); 
+        for(j = 0; j < LNodos.size(); j++){
+        if (hayauto == 0 && (i == j)) {    continue;         }
+        System.out.println( i + "-ij-" + j );
+        comparador =r.nextFloat();
+        Nodos a = LNodos.get(i);
+        Nodos b = LNodos.get(j); 
+        eldato =b.introdatos();
+        dat= Integer.parseInt(eldato);
+        System.out.println( dat + "--max--" + pnodos );
+        if (dat > pnodos){continue;}
+        if (Integer.parseInt(a.introdatos()) > pnodos){continue;}
+        System.out.println( dat + "--div--" + divisor );
+        proba= (float)dat/(pnodos*(i/(j+1)));
+        System.out.println( proba+"--sihacer--"+comparador );
+        if (proba>comparador){ System.out.println("si" );
+        contj++;  
+        a.Dadatos(""+ contj );
+        dat=dat+1;
+        b.Dadatos(""+dat);
+        
+        ARSTS arista = new ARSTS(a,b,dato_arista);  
+        LAristas.put(contadoraristas,arista);
+        a.introadj(b);
+        b.introadj(a);
+        if (goesto == 0) { 
+        out.println("\"" + a.introidentifier() + "\"--\"" + b.introidentifier() +  "\"");
+        out.flush();  } 
+        else { 
+        out.println("\"" + a.introidentifier() + "\"->\"" + b.introidentifier() +  "\"");
+        out.flush();}
+        }
+       
+        }
+       
+        contj=0;
+        }  out.println("}");
+        out.close();}   
+            System.out.println("Fin Barabási.");
+           break;
+           
+        default:
+            System.out.println("Opción no válida." );
+           break;
+      }
+        
+        if (hayauto == 1){
+        ciclos = "El grafo contiene autociclos";}
+        if (hayauto == 0){
+        ciclos = "El grafo no contiene autociclos.";}
+        /*--------------------------*/
+        if (goesto == 1){
+        dirigidos = "El grafo es dirigido.";}
+        if (goesto == 0){
+        dirigidos = "El grafo es NO dirigido.";}
+       
+       int g=1,h=0,d=0,contHM,sig,ere=0;
+       boolean existe;
+        Nodos a;
+        Nodos b;
+        LinkedList<String> pasados = new LinkedList();
+        LinkedList<String> pendientes = new LinkedList();
+        try (FileWriter fw = new FileWriter(archivo +"BFS"+ ".gv");
+        BufferedWriter bw = new BufferedWriter(fw);
+        PrintWriter out = new PrintWriter(bw)) {
+        out.println("strict digraph{");
+        out.flush();
+        a=LNodos.get(0);
+        pendientes.add(Integer.toString(a.introidentifier()));
+        pasados.add(Integer.toString(a.introidentifier()));
+        while (!pendientes.isEmpty()){
+         a = LNodos.get(Integer.parseInt(pendientes.pollFirst()));
+         ANodos = a.Regresaadj();
+         for (Iterator<Integer> ot = ANodos.keySet().iterator(); ot.hasNext();) {
+         d = ot.next();
+         b=ANodos.get(d);
+            if (pasados.contains(Integer.toString(b.introidentifier()))){continue;}
+            pendientes.add(Integer.toString(b.introidentifier()));
+            pasados.add(Integer.toString(b.introidentifier()));
+            out.println("\"" + a.introidentifier() + "\"->\"" + b.introidentifier() +  "\"");
+            out.flush();
+                      
+            }
+        } 
+        out.println("}");
+        out.close(); } 
+        a=LNodos.get(0);
+        LinkedList<String> LA = new LinkedList();
+        LA=DFSR(a.introidentifier(),archivo,LNodos);
+        try (FileWriter fw = new FileWriter(archivo +"DFS-R"+ ".gv");
+        BufferedWriter bw = new BufferedWriter(fw);
+        PrintWriter out = new PrintWriter(bw)) {
+        out.println("strict digraph{");
+        out.flush();
+        while (!LA.isEmpty()){
+        out.println(LA.pollFirst());
+        out.flush();}
+        out.println("}");
+        out.close(); }
+        
+        int inio;
+        Nodos x;
+        Nodos y;
+        
+        pasados = new LinkedList();
+        pendientes = new LinkedList();
+        LinkedList<String> otros = new LinkedList();
+        try (FileWriter fw = new FileWriter(archivo +"DFS-I"+ ".gv");
+        BufferedWriter bw = new BufferedWriter(fw);
+        PrintWriter out = new PrintWriter(bw)) {
+        out.println("strict digraph{");
+        out.flush();
+        x=LNodos.get(0);
+        pendientes.add(Integer.toString(x.introidentifier()));
+        pasados.add(Integer.toString(x.introidentifier()));
+        otros.add(Integer.toString(x.introidentifier()));
+        while (!otros.isEmpty()){
+        while (!pendientes.isEmpty()){
+        x = LNodos.get(Integer.parseInt(pendientes.pollFirst()));
+        ANodos = x.Regresaadj();
+        for (Iterator<Integer> ot = ANodos.keySet().iterator(); ot.hasNext();) {
+        d = ot.next();
+        y=ANodos.get(d);
+        if (pasados.contains(Integer.toString(y.introidentifier()))){continue;}
+        pendientes.add(Integer.toString(y.introidentifier()));
+        pasados.add(Integer.toString(y.introidentifier()));
+        otros.add(Integer.toString(x.introidentifier()));
+        out.println("\"" + x.introidentifier() + "\"->\"" + y.introidentifier() +  "\"");
+        out.flush();
+        break;          }}
+        
+        x = LNodos.get(Integer.parseInt(otros.pollLast()));
+        ANodos = x.Regresaadj();
+        for (Iterator<Integer> ot = ANodos.keySet().iterator(); ot.hasNext();) {
+        d = ot.next();
+        y=ANodos.get(d);
+        if (pasados.contains(Integer.toString(y.introidentifier()))){continue;}
+        pasados.add(Integer.toString(y.introidentifier()));
+        out.println("\"" + x.introidentifier() + "\"->\"" + y.introidentifier() +  "\"");
+        out.flush();  
+        
+        }}
+        out.println("}");
+        out.close(); }    
+        
+        /*--------------------------*/
+        JOptionPane.showMessageDialog(null,  "\n Número de nodos: " + numnodos + "\n"+dirigidos + "\n" + ciclos + "\n Ubicación del grafo: " + archivo +".gv");
+                
+        System.out.println(numnodos);
+           
+}   
+     public static LinkedList<String> DFSR(int q,String archivo,HashMap<Integer, Nodos> LNodos )  {
+        int onio,d;
+        Nodos x;
+        Nodos y ;             
+        LinkedList<String> LA = new LinkedList();
+        HashMap<Integer, Nodos> ANodos = new HashMap<>();
+        LinkedList<String>pasados = new LinkedList();
+        LinkedList<String>pendientes = new LinkedList();
+        LinkedList<String> otros = new LinkedList();
+        x=LNodos.get(0);
+        pendientes.add(Integer.toString(x.introidentifier()));
+        pasados.add(Integer.toString(x.introidentifier()));
+        otros.add(Integer.toString(x.introidentifier()));
+        while (!otros.isEmpty()){
+        while (!pendientes.isEmpty()){
+        x = LNodos.get(Integer.parseInt(pendientes.pollFirst()));
+        ANodos = x.Regresaadj();
+        for (Iterator<Integer> ot = ANodos.keySet().iterator(); ot.hasNext();) {
+        d = ot.next();
+        y=ANodos.get(d);
+        if (pasados.contains(Integer.toString(y.introidentifier()))){continue;}
+        pendientes.add(Integer.toString(y.introidentifier()));
+        pasados.add(Integer.toString(y.introidentifier()));
+        otros.add(Integer.toString(x.introidentifier()));
+        LA.add( "\"" + x.introidentifier() + "\"->\"" + y.introidentifier() +  "\"");
+        break;          }}
+        x = LNodos.get(Integer.parseInt(otros.pollLast()));
+        ANodos = x.Regresaadj();
+        for (Iterator<Integer> ot = ANodos.keySet().iterator(); ot.hasNext();) {
+        d = ot.next();
+        y=ANodos.get(d);
+        if (pasados.contains(Integer.toString(y.introidentifier()))){continue;}
+        pasados.add(Integer.toString(y.introidentifier()));
+        LA.add( "\"" + x.introidentifier() + "\"->\"" + y.introidentifier() +  "\"");
+        }}      
+         
+      return LA;
+    }
+    public class ARSTS {
+    Nodos x;
+    Nodos y;                                                                            
+    String datos;  
+    public ARSTS(){/*constructor vacio*/}                                                              
+                                                                                
+    public ARSTS(Nodos x, Nodos y, String datos){
+        this.x = x;                                                                           
+        this.y = y;                                                                           
+        this.datos = datos;                                                                            
+    }
+    public void intronodos(Nodos X, Nodos Y){
+        this.x = X;
+        this.y = Y;
+    }
+    public HashMap<Integer, Nodos> outnodos(){
+        HashMap<Integer, Nodos> newhashmap = new HashMap<>();
+        newhashmap.put(1, x);
+        newhashmap.put(2, y);
+        return newhashmap;
+    }
+    public void introdatos(String datos){        
+        datos = datos;  
+    }
+    public String outdatos(){
+        return datos;
+    }
+}    
+} 
